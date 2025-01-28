@@ -1,14 +1,16 @@
 {
-    "dependencies": {
-      "three": "^0.169.0",
-      "locar": "^0.0.2"
-    },
-    "devDependencies": {
-      "vite": "^5.4.8"
-    },
-    "scripts": {
-      "dev" : "vite dev",
-      "build": "vite build",
-      "deploy": "gh-pages -d dist"
-    }
+  "homepage": "https://darianwwu.github.io/LocARtest/",
+  "dependencies": {
+    "three": "^0.169.0",
+    "locar": "^0.0.2"
+  },
+  "devDependencies": {
+    "vite": "^5.4.8",
+    "gh-pages": "^5.0.0"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "deploy": "gh-pages -d dist"
   }
+}
