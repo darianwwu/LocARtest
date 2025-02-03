@@ -1,34 +1,61 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocAR.js - Hello World</title>
-    <style>
-        .info-box {
-            position: absolute;
-            left: 10px;
-            color: white;
-            font-size: 18px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        #distance { top: 10px; }
-        #userLocation { top: 60px; }
-        #orientation { bottom: 10px; }
-    </style>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Location-based Tracking</title>
 
-  <script type="module" crossorigin src="./assets/index-DOByH95p.js"></script>
-</head>
-<body>
-    <div id="distance" class="info-box">Entfernung: Wird geladen...</div>
-    <div id="userLocation" class="info-box">Position: Wird geladen...</div>
-    <div id="orientation" class="info-box">Orientierung: Wird geladen...</div>
-
-    <script>
-        document.getElementById('distance').innerText = 'Entfernung: Berechnet...';
-        document.getElementById('userLocation').innerText = 'Position: Ermittelt...';
+     <!-- Location Based AR-->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+    
+   <script>
+        THREEx.ArToolkitContext.baseURL = 'https://raw.githack.com/jeromeetienne/ar.js/master/three.js/'
     </script>
-</body>
+
+    <!-- Is added to get the current gps position-->
+    <script src="src/main.js"></script>
+
+    <style>
+      .centered {
+          height: 20%;
+          justify-content: center;
+          position: fixed;
+          bottom: 0%;
+          display: flex;
+          flex-direction: row;
+          width: 100%;
+          margin: 0px auto;
+          left: 0;
+          right: 0;
+          font-size: large;
+          color: white;
+      }
+    </style>
+</head>
+  <body style="margin: 0; overflow: hidden;">
+    
+    <!-- Displays the current position of the device-->
+    <div class="centered">
+      <div id="alert">Current Position</div>
+    </div>
+
+    <!-- AR Scene-->
+    <a-scene
+      vr-mode-ui="enabled: false"
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false;">
+
+        <!--Ecke Friedenssee-->
+        <a-image gps-entity-place="latitude: 51.935598; longitude: 7.650544;" src="./images/map-marker.png"></a-image>
+
+        <!--Agentur fuer Arbeit Parkplatz-->
+        <a-image gps-entity-place="latitude: 51.934367; longitude: 7.652602;" src="./images/map-marker.png"></a-image>
+
+        <a-camera look-controls-enabled='false' arjs-look-controls='smoothingFactor: 0.1' gps-camera="positionMinAccuracy: 10; alert: true; gpsTimeInterval: 1000; maxDistance: 40; gpsMinDistance: 2;" rotation-reader> </a-camera>
+    </a-scene>
+
+  </body>
 </html>
