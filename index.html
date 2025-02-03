@@ -1,9 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-<title>LocAR.js - Hello World</title>
-<script type='module' src='src/main.js'></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocAR.js - Hello World</title>
+    <style>
+        .info-box {
+            position: absolute;
+            left: 10px;
+            color: white;
+            font-size: 18px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #distance { top: 10px; }
+        #userLocation { top: 60px; }
+        #orientation { bottom: 10px; }
+    </style>
+    <script type='module' src='src/main.js'></script>
 </head>
 <body>
+    <div id="distance" class="info-box">Entfernung: Wird geladen...</div>
+    <div id="userLocation" class="info-box">Position: Wird geladen...</div>
+    <div id="orientation" class="info-box">Orientierung: Wird geladen...</div>
+
+    <script>
+        document.getElementById('distance').innerText = 'Entfernung: Berechnet...';
+        document.getElementById('userLocation').innerText = 'Position: Ermittelt...';
+    </script>
 </body>
 </html>
