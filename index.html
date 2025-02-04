@@ -6,11 +6,10 @@
     <title>GeoAR.js Navigation</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-look-at-component@1.0.0/dist/aframe-look-at-component.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
-
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     <style>
       #hud {
-        position: fixed;
+        position: absolute;
         top: 10px;
         left: 10px;
         background: rgba(0, 0, 0, 0.5);
@@ -18,10 +17,11 @@
         padding: 10px;
         border-radius: 5px;
         font-family: Arial, sans-serif;
+        z-index: 1000;
       }
 
       #radar {
-        position: fixed;
+        position: absolute;
         bottom: 10px;
         left: 10px;
         width: 100px;
@@ -32,6 +32,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        z-index: 1000;
       }
 
       #radar-arrow {
@@ -41,7 +42,7 @@
         transform-origin: left center;
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-Bg4Twotr.js"></script>
+    <script type="module" crossorigin src="/assets/index-Bg4Twotr.js"></script>
   </head>
   <body>
     <div id="hud">
@@ -53,6 +54,7 @@
     </div>
     
     <a-scene
+      embedded
       vr-mode-ui="enabled: false"
       arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;">
       
@@ -60,7 +62,7 @@
       <a-light type="ambient" intensity="0.3"></a-light>
       
       <a-assets>
-        <a-asset-item id="arrowModel" src="./car-arrow-glb/source/carArrow.glb"></a-asset-item>
+        <a-asset-item id="arrowModel" src="/car-arrow-glb/source/carArrow.glb"></a-asset-item>
       </a-assets>
       
       <a-entity id="arrow"
