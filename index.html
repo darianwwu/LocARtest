@@ -1,34 +1,26 @@
 <!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LocAR.js - Hello World</title>
-    <style>
-        .info-box {
-            position: absolute;
-            left: 10px;
-            color: white;
-            font-size: 18px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        #distance { top: 10px; }
-        #userLocation { top: 60px; }
-        #orientation { bottom: 10px; }
-    </style>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>GeoAR.js demo</title>
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-look-at-component@1.0.0/dist/aframe-look-at-component.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+  </head>
 
-  <script type="module" crossorigin src="./assets/index-BRfHA_QH.js"></script>
-</head>
-<body>
-    <div id="distance" class="info-box">Entfernung: Wird geladen...</div>
-    <div id="userLocation" class="info-box">Position: Wird geladen...</div>
-    <div id="orientation" class="info-box">Orientierung: Wird geladen...</div>
-
-    <script>
-        document.getElementById('distance').innerText = 'Entfernung: Berechnet...';
-        document.getElementById('userLocation').innerText = 'Position: Ermittelt...';
-    </script>
-</body>
+  <body>
+    <a-scene
+      vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
+    >
+      <a-text
+        value="This content will always face you."
+        look-at="[gps-camera]"
+        scale="120 120 120"
+        gps-entity-place="latitude: 51.935360; longitude: 7.652375;"
+      ></a-text>
+      <a-camera gps-camera rotation-reader> </a-camera>
+    </a-scene>
+  </body>
 </html>
