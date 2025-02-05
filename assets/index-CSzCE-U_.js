@@ -3,6 +3,8 @@
         vr-mode-ui="enabled: false"
         arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;">
         
+        <a-camera gps-new-camera gpsMinDistance="2" alert="true" gpsTimeInterval="500" id="camera"></a-camera>
+        
         <a-light type="directional" position="1 1 1" intensity="0.5"></a-light>
         <a-light type="ambient" intensity="0.3"></a-light>
         
@@ -25,6 +27,6 @@
                  position="0 2 0">
         </a-image>
         
-        <a-camera gps-new-camera gpsMinDistance="2" alert="true" gpsTimeInterval="500" id="camera"></a-camera>
+        
       </a-scene>
       `;document.body.innerHTML=o}navigator.geolocation.getCurrentPosition(n=>{const e=n.coords.latitude,t=n.coords.longitude;r(e,t)},n=>{console.error("Fehler beim Abrufen der GPS-Daten:",n),alert("GPS konnte nicht geladen werden. Bitte aktivieren Sie den Standort.")},{enableHighAccuracy:!0})});
