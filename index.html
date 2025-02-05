@@ -7,13 +7,34 @@
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
-    <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
-
-    <script type="module" crossorigin src="./assets/index-CjNN9aNv.js"></script>
+    <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+    <script type="module" crossorigin src="/assets/index-CjNN9aNv.js"></script>
   </head>
   <body>
-    <a-scene>
+    <a-scene
+      vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;">
+      
+      <a-light type="directional" position="1 1 1" intensity="0.5"></a-light>
+      <a-light type="ambient" intensity="0.3"></a-light>
+      
+      <a-assets>
+        <img id="platform" src="https://i.imgur.com/mYmmbrp.jpg">
+      </a-assets>
+      
       <a-camera gps-new-camera></a-camera>
+
+      <a-entity
+        gps-new-entity-place="latitude: 51.935300; longitude: 7.649964;"
+        id="dreieck"
+        geometry="primitive: triangle"
+        src="#platform"
+        rotation="-90 0 0"
+        position="0 2 0">
+      </a-entity>
+
+      <a-image gps-new-entity-place="latitude: 51.935300; longitude: 7.649964;" id="zielort" src="./images/map-marker.png" position="0 2 0"></a-image>
+      
     </a-scene>
   </body>
 </html>
