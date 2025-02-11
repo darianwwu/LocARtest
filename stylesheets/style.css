@@ -1,0 +1,67 @@
+/* Entfernungsanzeige */
+#distanceDisplay {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 16px;
+    border-radius: 5px;
+    z-index: 10000;
+  }
+  
+  /* Kompassanzeige */
+  #compassContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  }
+  
+  #compassArrow {
+    font-size: 32px;
+    color: white;
+  }
+  
+  #compassText {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: white;
+  }
+  
+  /* Kalibrierungsbutton */
+  #calibButton {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    z-index: 10000;
+  }
+  
+  /* Toast-Nachrichten */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 14px;
+    border-radius: 5px;
+    z-index: 9999;
+  }
+  
