@@ -1,116 +1,266 @@
-import * as THREE from 'three';
-import * as LocAR from 'locar';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+window.onload = () => {
+  let markerAdded = false,
+      calibrationQuaternion = null,
+      currentQuaternion = null;
 
-const camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 500 );
+  const targetCoords = {
+      latitude: 51.935175,
+      longitude: 7.649708
+  };
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+  const currentPosition = {
+      latitude: null,
+      longitude: null
+  };
 
-const scene = new THREE.Scene();
-const locar = new LocAR.LocationBased(scene, camera);
+  const distances = [3, 5.5, 12];
 
-const cam = new LocAR.WebcamRenderer(renderer);
-const deviceOrientationControls = new LocAR.DeviceOrientationControls(camera);
-const loader = new GLTFLoader();
+  const scene = document.querySelector("a-scene");
+  const cameraEl = document.querySelector("[gps-new-camera]");
+  cameraEl.setAttribute("camera", { far: 100 });
+  
+  // Entfernung Anzeige
+  const distanceDisplay = document.createElement("div");
+  distanceDisplay.id = "distanceDisplay";
+  document.body.appendChild(distanceDisplay);
 
-const targetLocation = { lat: 51.93601, lon: 7.65105 };
-let loadedModel;
+  // Kompassanzeige
+  const compassContainer = document.createElement("div");
+  compassContainer.id = "compassContainer";
+  document.body.appendChild(compassContainer);
 
-const directionDisplay = document.getElementById('orientation');
-const distanceDisplay = document.getElementById('distance');
-const userLocationDisplay = document.getElementById('userLocation');
+  const compassArrow = document.createElement("div");
+  compassArrow.id = "compassArrow";
+  compassArrow.innerText = "↑";
+  compassContainer.appendChild(compassArrow);
 
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((position) => {
-        loader.load('car-arrow-glb/source/carArrow.glb', function (gltf) {
-            loadedModel = gltf.scene;
-            loadedModel.scale.set(0.5, 0.5, 0.5); // Größe anpassen
-            scene.add(loadedModel);
-            updateArrowPositionAndRotation(loadedModel, position.coords, targetLocation);
-            updateDistanceDisplay(position.coords, targetLocation);
-            updateUserLocationDisplay(position.coords);
-        });
+  const compassText = document.createElement("div");
+  compassText.id = "compassText";
+  compassContainer.appendChild(compassText);
+
+  let sensor;
+  if ("AbsoluteOrientationSensor" in window) {
+      sensor = new AbsoluteOrientationSensor({ frequency: 60 });
+  } else if ("RelativeOrientationSensor" in window) {
+      sensor = new RelativeOrientationSensor({ frequency: 60 });
+  } else {
+      showMessage("Gerät unterstützt keine Orientation Sensoren.");
+      return;
+  }
+
+  sensor.addEventListener("reading", () => {
+      currentQuaternion = [...sensor.quaternion];
+      updateCompass(sensor.quaternion);
+
+      if(currentPosition.latitude && currentPosition.longitude){
+        console.log("Nutzerstandort:" + currentPosition.latitude + " " + currentPosition.longitude);
+        checkIfPointingAtTarget(sensor.quaternion, currentPosition.latitude, currentPosition.longitude, targetCoords.latitude, targetCoords.longitude);
+      }
     });
-}
 
-locar.on("gpsupdate", (pos, distMoved) => {
-    if (!pos || !pos.coords) return;
-    if (loadedModel) {
-        updateArrowPositionAndRotation(loadedModel, pos.coords, targetLocation);
-        updateDistanceDisplay(pos.coords, targetLocation);
-        updateUserLocationDisplay(pos.coords);
+  sensor.addEventListener("error", e => {
+      console.error("Sensor error: ", e.error);
+      showMessage("Fehler beim Sensor!");
+  });
+
+  sensor.start();
+
+  cameraEl.addEventListener("gps-camera-update-position", (e) => {
+      currentPosition.latitude = e.detail.position.latitude;
+      currentPosition.longitude = e.detail.position.longitude;
+
+      if(currentPosition.latitude && currentPosition.longitude) {
+        const distanceToTarget = computeDistance(currentPosition.latitude, currentPosition.longitude, targetCoords.latitude, targetCoords.longitude);
+        distanceDisplay.innerText = `Entfernung zum Ziel: ${Math.round(distanceToTarget)} m`;
+      
+        let adjustedHeading = 0;
+        if (calibrationQuaternion) {
+            adjustedHeading = quaternionToHeading(currentQuaternion) - quaternionToHeading(calibrationQuaternion);
+        }
+
+        document.querySelectorAll("a-sphere").forEach(sphere => sphere.remove());
+
+        distances.forEach((distance, index) => {
+            const sphere = document.createElement("a-sphere");
+            sphere.setAttribute("color", "#00008B");
+            sphere.setAttribute("opacity", "0.7");
+
+            const newCoords = getIntermediateCoords(currentPosition.latitude, currentPosition.longitude, targetCoords.latitude, targetCoords.longitude, distance, adjustedHeading);
+            sphere.setAttribute("gps-new-entity-place", { latitude: newCoords.latitude, longitude: newCoords.longitude });
+            let radius;
+            if (index === 0) {
+                radius = 0.3; // kleinste Kugel
+            } else if (index === 1) {
+                radius = 0.4;  // mittelgroße Kugel
+            } else if (index === 2) {
+                radius = 0.65;  // größte Kugel
+            }
+            sphere.setAttribute("radius", radius.toString());
+            scene.appendChild(sphere);
+        });
+
+        if (!markerAdded) {
+            const marker = document.createElement("a-image");
+            marker.setAttribute("src", "./images/map-marker.png");
+            marker.setAttribute("width", "4");
+            marker.setAttribute("height", "4");
+            marker.setAttribute("look-at", "[gps-new-camera]");
+            marker.setAttribute("gps-new-entity-place", { latitude: targetCoords.latitude, longitude: targetCoords.longitude });
+
+            scene.appendChild(marker);
+            markerAdded = true;
+        }
+      }
+      else {
+        console.error("Keine aktuellen Koordinaten vorhanden!");
+        showMessage("Keine aktuellen Koordinaten vorhanden!");
+      }
+  });
+
+  function updateCompass(quaternion) {
+      if (!quaternion) return;
+      const heading = quaternionToHeading(quaternion);
+      compassArrow.style.transform = `rotate(${-heading}deg)`;
+      compassText.innerText = `${Math.round(heading)}°`;
+  }
+
+  function quaternionToHeading(quaternion) {
+      let [x, y, z, w] = quaternion;
+      let heading = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)) * 180 / Math.PI;
+      if (heading < 0) heading += 360;
+      return calibrationQuaternion ? (heading - quaternionToHeading(calibrationQuaternion) + 360) % 360 : heading;
+  }
+
+  function getIntermediateCoords(lat1, lon1, lat2, lon2, offsetMeters, headingOffset) {
+      const newCoords = computeOffsetCoords(lat1, lon1, lat2, lon2, offsetMeters);
+      const earthRadius = 6371000;
+      const latOffset = newCoords.latitude - lat1;
+      const lonOffset = newCoords.longitude - lon1;
+
+      const rotatedLat = latOffset * Math.cos(headingOffset) - lonOffset * Math.sin(headingOffset);
+      const rotatedLon = latOffset * Math.sin(headingOffset) + lonOffset * Math.cos(headingOffset);
+
+      return {
+          latitude: lat1 + rotatedLat,
+          longitude: lon1 + rotatedLon
+      };
+  }
+
+  function computeOffsetCoords(lat1, lon1, lat2, lon2, offsetMeters) {
+      const rad = Math.PI / 180;
+      const dLat = (lat2 - lat1) * rad;
+      const dLon = (lon2 - lon1) * rad;
+
+      const y = Math.sin(dLon) * Math.cos(lat2 * rad);
+      const x = Math.cos(lat1 * rad) * Math.sin(lat2 * rad) - Math.sin(lat1 * rad) * Math.cos(lat2 * rad) * Math.cos(dLon);
+
+      const bearing = Math.atan2(y, x);
+      const R = 6371000;
+      const newLat = Math.asin(Math.sin(lat1 * rad) * Math.cos(offsetMeters / R) + Math.cos(lat1 * rad) * Math.sin(offsetMeters / R) * Math.cos(bearing));
+      const newLon = lon1 * rad + Math.atan2(Math.sin(bearing) * Math.sin(offsetMeters / R) * Math.cos(lat1 * rad), Math.cos(offsetMeters / R) - Math.sin(lat1 * rad) * Math.sin(newLat));
+
+      return { latitude: newLat / rad, longitude: newLon / rad };
+  }
+
+  function computeDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const rad = Math.PI / 180;
+      const dLat = (lat2 - lat1) * rad;
+      const dLon = (lon2 - lon1) * rad;
+
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  }
+
+  function showMessage(msg) {
+      alert(msg);
+  }
+
+  // Berechnet das Bearing (Azimut) vom Punkt (lat1, lon1) zum Punkt (lat2, lon2)
+function computeBearing(lat1, lon1, lat2, lon2) {
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+    
+    const x = Math.sin(Δλ) * Math.cos(φ2);
+    const y = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+    
+    let bearing = Math.atan2(x, y); // in Radiant
+    bearing = bearing * 180 / Math.PI; // Umrechnung in Grad
+    return (bearing + 360) % 360;  // Normalisierung auf den Bereich 0° bis 360°
+  }
+  
+// Konvertiert ein Quaternion (im Format [x, y, z, w]) in Euler-Winkel (Roll, Pitch, Yaw)
+function quaternionToEuler(q) {
+    const [x, y, z, w] = q;
+    const sinr_cosp = 2 * (w * x + y * z);
+    const cosr_cosp = 1 - 2 * (x * x + y * y);
+    const roll = Math.atan2(sinr_cosp, cosr_cosp);
+  
+    const sinp = 2 * (w * y - z * x);
+    let pitch;
+    if (Math.abs(sinp) >= 1) {
+      pitch = Math.sign(sinp) * Math.PI / 2;
+    } else {
+      pitch = Math.asin(sinp);
     }
-});
-
-locar.startGps();
-
-renderer.setAnimationLoop(animate);
-
-function animate() {
-    cam.update();
-    deviceOrientationControls.update();
-    updateDirectionDisplay();
-    renderer.render(scene, camera);
-}
-
-scene.add(new THREE.AxesHelper(5));  // Dies zeigt dir die Orientierung der Weltachsen.
-
-function updateArrowPositionAndRotation(model, userCoords, targetCoords) {
-    // Verwende lonLatToWorldCoords anstelle von projectLonLatToWorld
-    const userWorldCoords = locar.lonLatToWorldCoords(userCoords.longitude, userCoords.latitude);
-    const targetWorldCoords = locar.lonLatToWorldCoords(targetCoords.lon, targetCoords.lat);
-
-    const directionVector = new THREE.Vector3(
-        targetWorldCoords[0] - userWorldCoords[0],  // x
-        0,  // y
-        targetWorldCoords[2] - userWorldCoords[2]   // z
-    ).normalize();
-
-    model.position.set(
-        userWorldCoords[0] + directionVector.x,
-        -0.4,  // Fixe die y-Position
-        userWorldCoords[2] + directionVector.z
-    );
-
-    const cameraDirection = new THREE.Vector3();
-    camera.getWorldDirection(cameraDirection);
-    const angleToTarget = Math.atan2(directionVector.x, directionVector.z);
-    const deviceAngle = Math.atan2(cameraDirection.x, cameraDirection.z);
-    const rotationAngle = deviceAngle - angleToTarget; // Fix: Richtung invertieren
-    model.rotation.set(0, rotationAngle, 0);
-}
-
-function updateDistanceDisplay(userCoords, targetCoords) {
-    const distance = calculateDistance(userCoords.latitude, userCoords.longitude, targetCoords.lat, targetCoords.lon);
-    distanceDisplay.innerText = `Entfernung: ${distance.toFixed(2)} Meter`;
-}
-
-function updateUserLocationDisplay(userCoords) {
-    userLocationDisplay.innerText = `Position: Lat ${userCoords.latitude.toFixed(6)}, Lon ${userCoords.longitude.toFixed(6)}`;
-}
-
-function updateDirectionDisplay() {
-    const cameraDirection = new THREE.Vector3();
-    camera.getWorldDirection(cameraDirection);
-    const angle = (Math.atan2(cameraDirection.x, cameraDirection.z) * (180 / Math.PI) + 360) % 360;
-    const compassDirections = ["N", "NE", "E", "SE", "S", "SW", "W", "NW", "N"];
-    const index = Math.round(angle / 45);
-    directionDisplay.innerText = `Blickrichtung: ${compassDirections[index]}`;
-}
-
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371000; // Radius der Erde in Metern
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c;
-}
+  
+    const siny_cosp = 2 * (w * z + x * y);
+    const cosy_cosp = 1 - 2 * (y * y + z * z);
+    let yaw = Math.atan2(siny_cosp, cosy_cosp) * 180 / Math.PI;
+    
+    if (yaw < 0) {
+      yaw += 360;
+    }
+    
+    return {
+      roll: roll * 180 / Math.PI,
+      pitch: pitch * 180 / Math.PI,
+      yaw: yaw
+    };
+  }
+  
+  
+  
+  // Berechnet den minimalen Winkelunterschied zwischen zwei Winkeln in Grad
+  function angleDifference(angle1, angle2) {
+    let diff = Math.abs(angle1 - angle2) % 360;
+    if (diff > 180) {
+      diff = 360 - diff;
+    }
+    return diff;
+  }
+  
+  // Diese Funktion prüft, ob der Nutzer mit seinem Gerät in Richtung des Ziels schaut
+  function checkIfPointingAtTarget(sensorQuaternion, userLat, userLon, targetLat, targetLon) {
+    // Berechne das Bearing vom Nutzer zum Ziel
+    const targetBearing = computeBearing(targetLat, targetLon, userLat, userLon);
+    
+    // Ermittle die aktuellen Euler-Winkel aus dem Quaternion
+    const euler = quaternionToEuler(sensorQuaternion);
+    const deviceYaw = euler.yaw; // Annahme: 'yaw' entspricht der horizontalen Ausrichtung
+    
+    // Berechne den Winkelunterschied zwischen Geräteausrichtung und Zielrichtung
+    const diff = angleDifference(deviceYaw, targetBearing);
+    
+    // Toleranz in Grad (anpassbar, je nach gewünschter Genauigkeit)
+    const tolerance = 15; 
+    
+    if (diff < tolerance) {
+      // Der Nutzer schaut in Richtung des Ziels – führe die gewünschte Aktion aus
+      kompassGruenMachen();
+    }
+    else {
+        // Der Nutzer schaut nicht in Richtung des Ziels
+        compassArrow.style.color = "red";
+    }
+  }
+  
+  // Platzhalter-Funktion für die gewünschte Aktion
+  function kompassGruenMachen() {
+    console.log("Ziel ausgerichtet!");
+    // Der Nutzer schaut in Richtung des Ziels
+    compassArrow.style.color = "green";
+  }
+  
+};
