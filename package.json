@@ -1,6 +1,7 @@
 {
   "homepage": "https://darianwwu.github.io/LocARtest/",
   "dependencies": {
+    "aframe": "^1.7.0",
     "locar": "^0.0.2",
     "three": "^0.169.0",
     "threex": "^1.0.0"

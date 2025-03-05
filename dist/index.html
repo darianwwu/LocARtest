@@ -1,16 +1,62 @@
 <!DOCTYPE html>
 <html>
-<head>
-<title>AR.js Beispielseite</title>
-<script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-<script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/3.4.5/three.js/build/ar-threex-location-only.js'></script>
-<script src='/aframe-ar.js'></script>
-<link rel="stylesheet" href="/stylesheets/style.css">
-  <script type="module" crossorigin src="/assets/index-BbBvHEtJ.js"></script>
-</head>
-<body>
-<a-scene vr-mode-ui='enabled: false' arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false' renderer='antialias: true; alpha: true'>
-    <a-camera look-controls-enabled='false' arjs-device-orientation-controls='smoothingFactor: 0.1' gps-new-camera='gpsMinDistance: 5'> </a-camera>
-</a-scene>
-</body>
+  <head>
+    <title>AR.js Beispielseite</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script type="text/javascript" src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/three.js/build/ar-threex-location-only.js"></script>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+    <style>
+      /* Overlay für den Kalibrierungsmodus */
+      #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      /* Standardmäßig die App ausblenden, solange nicht kalibriert */
+      #app {
+        display: none;
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-Dvqydjog.js"></script>
+  </head>
+  <body>
+    <!-- Overlay mit Kompassanzeige und Hinweis -->
+    <div id="overlay">
+      <div id="compassContainer">
+        <div id="compassArrow" style="font-size: 48px;">↑</div>
+        <div id="compassText" style="font-size: 24px;"></div>
+      </div>
+      <p>Bitte drehen Sie Ihr Gerät, bis der Kompass 0° (Norden) anzeigt.</p>
+    </div>
+    <!-- Hauptanwendung -->
+    <div id="app">
+      <div id="compassContainer">
+        <div id="compassArrow" style="font-size: 48px;">↑</div>
+        <div id="compassText" style="font-size: 24px;"></div>
+      </div>
+      <a-scene vr-mode-ui="enabled: false" arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false" renderer="antialias: true; alpha: true">
+        <a-camera look-controls-enabled="false" arjs-device-orientation-controls="smoothingFactor: 0.1" gps-new-camera="gpsMinDistance: 5"></a-camera>
+      </a-scene>
+    </div>
+    
+    <!-- Skript, das beim Laden prüft, ob kalibriert wurde -->
+    <script>
+      // Falls die Kalibrierung bereits erfolgt ist, blendet das Overlay aus und zeigt die App.
+      if (localStorage.getItem("calibrated") === "true") {
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("app").style.display = "block";
+      }
+    </script>
+    
+    <!-- Hauptskript laden -->
+  </body>
 </html>
