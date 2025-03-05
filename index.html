@@ -1,73 +1,59 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <title>A-Frame AR mit Renderer-Logik</title>
-    <meta name="description" content="AR-Beispiel mit kontinuierlicher Renderer-Logik">
-    <!-- A-Frame 1.6.0 (oder kompatibel) -->
-    <!-- Drei.js (falls benötigt von AbsoluteDeviceOrientationControls) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
-    <!-- AbsoluteDeviceOrientationControls (stelle sicher, dass diese Datei vorhanden ist) -->
+    <title>AR.js Beispielseite</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script type="text/javascript" src="https://raw.githack.com/AR-js-org/AR.js/3.4.7/three.js/build/ar-threex-location-only.js"></script>
+    <script src="/aframe-ar.js"></script>
+    <link rel="stylesheet" href="/stylesheets/style.css">
     <style>
-      body { margin: 0; overflow: hidden; }
+      /* Overlay für den Kalibrierungsmodus */
       #overlay {
         position: fixed;
-        top: 0; left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.8);
-        color: white;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        color: #fff;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        z-index: 10;
+        z-index: 1000;
       }
-      #compassContainer, #distanceDisplay {
-        position: fixed;
-        z-index: 11;
-        color: white;
-        text-align: center;
-      }
-      #compassContainer {
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-      #distanceDisplay {
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
+      /* Standardmäßig die App ausblenden, solange nicht kalibriert */
+      #app {
+        display: none;
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-CbF0xWA8.js"></script>
+    <script type="module" crossorigin src="/assets/index-Dvqydjog.js"></script>
   </head>
   <body>
-    <!-- Overlay zum Starten der AR-Anwendung -->
+    <!-- Overlay mit Kompassanzeige und Hinweis -->
     <div id="overlay">
-      <button id="btnStart" style="font-size: 20px; padding: 10px 20px;">Start AR</button>
+      <div id="compassContainer">
+        <div id="compassArrow" style="font-size: 48px;">↑</div>
+        <div id="compassText" style="font-size: 24px;"></div>
+      </div>
+      <p>Bitte drehen Sie Ihr Gerät, bis der Kompass 0° (Norden) anzeigt.</p>
     </div>
-
-    <!-- A-Frame Szene mit Renderer-Konfiguration -->
-    <a-scene 
-      renderer="antialias: true; colorManagement: true; sortObjects: true; physicallyCorrectLights: true; maxCanvasWidth: 1920; maxCanvasHeight: 1920;"
-      embedded 
-      arjs="sourceType: webcam; debugUIEnabled: false;">
-      
-      <!-- GPS-Kamera mit dem neuen updater -->
-      <a-entity id="cameraEntity" gps-new-camera device-orientation-updater camera="far: 100"></a-entity>
-      
-      <!-- Weitere Szene-Elemente werden dynamisch eingefügt -->
-    </a-scene>
-
-    <!-- Kompassanzeige -->
-    <div id="compassContainer">
-      <div id="compassArrow" style="font-size: 48px;">↑</div>
-      <div id="compassText" style="font-size: 24px;">0°</div>
+    <!-- Hauptanwendung -->
+    <div id="app">
+      <a-scene vr-mode-ui="enabled: false" arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false" renderer="antialias: true; alpha: true">
+        <a-camera look-controls-enabled="false" arjs-device-orientation-controls="smoothingFactor: 0.1" gps-new-camera="gpsMinDistance: 5"></a-camera>
+      </a-scene>
     </div>
-
-    <!-- Entfernung zum Ziel -->
-    <div id="distanceDisplay" style="font-size: 24px;"></div>
-
-    <!-- Haupt-JS-Datei -->
+    
+    <!-- Skript, das beim Laden prüft, ob kalibriert wurde -->
+    <script>
+      // Falls die Kalibrierung bereits erfolgt ist, blendet das Overlay aus und zeigt die App.
+      if (localStorage.getItem("calibrated") === "true") {
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("app").style.display = "block";
+      }
+    </script>
+    
+    <!-- Hauptskript laden -->
   </body>
 </html>
